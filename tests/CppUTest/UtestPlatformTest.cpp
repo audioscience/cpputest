@@ -85,7 +85,9 @@ extern "C" {
 
 static int _accessViolationTestFunction()
 {
+#ifndef __clang_analyzer__
     return *(volatile int*) 0;
+#endif
 }
 
 #include <unistd.h>
