@@ -27,7 +27,9 @@ TEST(BasicBehavior, deleteArrayInvalidatesMemory)
     unsigned char* memory = new unsigned char[10];
     PlatformSpecificMemset(memory, 0xAB, 10);
     delete [] memory;
+#ifndef __clang_analyzer__
     CHECK(memory[5] != 0xCB);
+#endif
 }
 
 TEST(BasicBehavior, deleteInvalidatesMemory)
@@ -35,7 +37,9 @@ TEST(BasicBehavior, deleteInvalidatesMemory)
     unsigned char* memory = new unsigned char;
     *memory = 0xAD;
     delete memory;
+#ifndef __clang_analyzer__
     CHECK(*memory != 0xAD);
+#endif
 }
 
 TEST(BasicBehavior, DeleteWithSizeParameterWorks)
@@ -49,7 +53,9 @@ TEST(BasicBehavior, DeleteWithSizeParameterWorks)
 
 static void deleteUnallocatedMemory()
 {
+#ifndef __clang_analyzer__
     delete (char*) 0x1234678;
+#endif
     FAIL("Should never come here"); // LCOV_EXCL_LINE
 } // LCOV_EXCL_LINE
 
