@@ -29,7 +29,7 @@
 #include "CppUTest/TestRegistry.h"
 
 TestRegistry::TestRegistry() :
-    tests_(NULL), nameFilters_(NULL), groupFilters_(NULL), firstPlugin_(NullTestPlugin::instance()), runInSeperateProcess_(false), currentRepetition_(0), runIgnored_(false)
+    tests_(NULLPTR), nameFilters_(NULLPTR), groupFilters_(NULLPTR), firstPlugin_(NullTestPlugin::instance()), runInSeperateProcess_(false), currentRepetition_(0), runIgnored_(false)
 
 {
 }
@@ -48,7 +48,7 @@ void TestRegistry::runAllTests(TestResult& result)
     bool groupStart = true;
 
     result.testsStarted();
-    for (UtestShell *test = tests_; test != NULL; test = test->getNext()) {
+    for (UtestShell *test = tests_; test != NULLPTR; test = test->getNext()) {
         if (runInSeperateProcess_) test->setRunInSeperateProcess();
         if (runIgnored_) test->setRunIgnored();
 
@@ -77,7 +77,7 @@ void TestRegistry::listTestGroupNames(TestResult& result)
 {
     SimpleString groupList;
 
-    for (UtestShell *test = tests_; test != NULL; test = test->getNext()) {
+    for (UtestShell *test = tests_; test != NULLPTR; test = test->getNext()) {
         SimpleString gname;
         gname += "#";
         gname += test->getGroup();
@@ -100,7 +100,7 @@ void TestRegistry::listTestGroupAndCaseNames(TestResult& result)
 {
     SimpleString groupAndNameList;
 
-    for (UtestShell *test = tests_; test != NULL; test = test->getNext()) {
+    for (UtestShell *test = tests_; test != NULLPTR; test = test->getNext()) {
         if (testShouldRun(test, result)) {
             SimpleString groupAndName;
             groupAndName += "#";
@@ -128,17 +128,17 @@ bool TestRegistry::endOfGroup(UtestShell* test)
     return (!test || !test->getNext() || test->getGroup() != test->getNext()->getGroup());
 }
 
-int TestRegistry::countTests()
+size_t TestRegistry::countTests()
 {
     return tests_ ? tests_->countTests() : 0;
 }
 
-TestRegistry* TestRegistry::currentRegistry_ = 0;
+TestRegistry* TestRegistry::currentRegistry_ = NULLPTR;
 
 TestRegistry* TestRegistry::getCurrentRegistry()
 {
     static TestRegistry registry;
-    return (currentRegistry_ == 0) ? &registry : currentRegistry_;
+    return (currentRegistry_ == NULLPTR) ? &registry : currentRegistry_;
 }
 
 void TestRegistry::setCurrentRegistry(TestRegistry* registry)
@@ -148,7 +148,7 @@ void TestRegistry::setCurrentRegistry(TestRegistry* registry)
 
 void TestRegistry::unDoLastAddTest()
 {
-    tests_ = tests_ ? tests_->getNext() : NULL;
+    tests_ = tests_ ? tests_->getNext() : NULLPTR;
 
 }
 
@@ -227,6 +227,34 @@ UtestShell* TestRegistry::getFirstTest()
     return tests_;
 }
 
+
+void TestRegistry::shuffleRunOrder(rand_func_t rand_func)
+{
+    if (getFirstTest() == NULLPTR)
+    {
+        return;
+    }
+    const size_t numTests = getFirstTest()->countTests();
+    typedef UtestShell* listElem;
+    listElem* tests = new listElem[numTests];
+    UtestShell *test = getFirstTest();
+    for (size_t testsIdx = 0; testsIdx < numTests; ++testsIdx)
+    {
+        tests[testsIdx] = test;
+        test = test->getNext();
+    }
+    shuffle_list(rand_func, numTests, reinterpret_cast<void**>(tests));
+
+    // Store shuffled list back to linked list
+    UtestShell *prev = NULLPTR;
+    for (size_t i = 0; i < numTests; ++i)
+    {
+        prev = tests[numTests - 1 - i]->addTest(prev);
+    }
+    tests_ = prev;
+    delete[] tests;
+}
+
 UtestShell* TestRegistry::getTestWithNext(UtestShell* test)
 {
     UtestShell* current = tests_;
@@ -243,7 +271,7 @@ UtestShell* TestRegistry::findTestWithName(const SimpleString& name)
             return current;
         current = current->getNext();
     }
-    return NULL;
+    return NULLPTR;
 }
 
 UtestShell* TestRegistry::findTestWithGroup(const SimpleString& group)
@@ -254,6 +282,6 @@ UtestShell* TestRegistry::findTestWithGroup(const SimpleString& group)
             return current;
         current = current->getNext();
     }
-    return NULL;
+    return NULLPTR;
 }
 

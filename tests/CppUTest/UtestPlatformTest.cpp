@@ -60,7 +60,7 @@ static void _failFunction()
 
 extern "C" {
 
-    static int (*original_waitpid)(int, int*, int) = NULL;
+    static int (*original_waitpid)(int, int*, int) = NULLPTR;
 
     static int fork_failed_stub(void) { return -1; }
 
@@ -86,7 +86,7 @@ extern "C" {
 static int _accessViolationTestFunction()
 {
 #ifndef __clang_analyzer__
-    return *(volatile int*) 0;
+	return *(volatile int*) NULLPTR;
 #endif
 }
 

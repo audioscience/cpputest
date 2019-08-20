@@ -47,7 +47,7 @@ public:
     {
     }
 
-    virtual bool parseArguments(int, const char**, int)
+    virtual bool parseArguments(int, const char *const *, int)
     {
         /* Remove ourselves from the count */
         amountOfPlugins = registry_->countPlugins() - 1;
@@ -64,9 +64,9 @@ public:
   StringBufferTestOutput* fakeConsoleOutputWhichIsReallyABuffer;
   StringBufferTestOutput* fakeTCOutputWhichIsReallyABuffer;
 
-  CommandLineTestRunnerWithStringBufferOutput(int argc, const char** argv, TestRegistry* registry)
-    : CommandLineTestRunner(argc, argv, registry), fakeJUnitOutputWhichIsReallyABuffer_(NULL),
-    fakeConsoleOutputWhichIsReallyABuffer(NULL), fakeTCOutputWhichIsReallyABuffer(NULL)
+  CommandLineTestRunnerWithStringBufferOutput(int argc, const char *const *argv, TestRegistry* registry)
+    : CommandLineTestRunner(argc, argv, registry), fakeJUnitOutputWhichIsReallyABuffer_(NULLPTR),
+    fakeConsoleOutputWhichIsReallyABuffer(NULLPTR), fakeTCOutputWhichIsReallyABuffer(NULLPTR)
   {}
 
   TestOutput* createConsoleOutput()
@@ -105,6 +105,13 @@ TEST_GROUP(CommandLineTestRunner)
       delete pluginCountingPlugin;
       delete oneTest_;
     }
+
+    SimpleString runAndGetOutput(const int argc, const char* argv[])
+    {
+        CommandLineTestRunnerWithStringBufferOutput commandLineTestRunner(argc, argv, &registry);
+        commandLineTestRunner.runAllTestsMain();
+        return commandLineTestRunner.fakeConsoleOutputWhichIsReallyABuffer->getOutput();
+    }
 };
 
 TEST(CommandLineTestRunner, OnePluginGetsInstalledDuringTheRunningTheTests)
@@ -137,7 +144,7 @@ TEST(CommandLineTestRunner, TeamcityOutputEnabled)
     const char* argv[] = {"tests.exe", "-oteamcity"};
     CommandLineTestRunnerWithStringBufferOutput commandLineTestRunner(2, argv, &registry);
     commandLineTestRunner.runAllTestsMain();
-    CHECK(commandLineTestRunner.fakeTCOutputWhichIsReallyABuffer);
+    CHECK(commandLineTestRunner.fakeTCOutputWhichIsReallyABuffer != NULLPTR);
 }
 
 TEST(CommandLineTestRunner, JunitOutputEnabled)
@@ -146,7 +153,7 @@ TEST(CommandLineTestRunner, JunitOutputEnabled)
 
     CommandLineTestRunnerWithStringBufferOutput commandLineTestRunner(2, argv, &registry);
     commandLineTestRunner.runAllTestsMain();
-    CHECK(commandLineTestRunner.fakeJUnitOutputWhichIsReallyABuffer_);
+    CHECK(commandLineTestRunner.fakeJUnitOutputWhichIsReallyABuffer_ != NULLPTR);
 }
 
 TEST(CommandLineTestRunner, JunitOutputAndVerboseEnabled)
@@ -179,6 +186,27 @@ TEST(CommandLineTestRunner, listTestGroupAndCaseNamesShouldWorkProperly)
     STRCMP_CONTAINS("group.test", commandLineTestRunner.fakeConsoleOutputWhichIsReallyABuffer->getOutput().asCharString());
 }
 
+TEST(CommandLineTestRunner, randomShuffleSeedIsPrintedAndRandFuncIsExercised)
+{
+    // more than 1 item in test list ensures that shuffle algorithm calls rand_()
+    UtestShell *anotherTest = new UtestShell("group", "test2", "file", 1);
+    registry.addTest(anotherTest);
+
+    const char* argv[] = { "tests.exe", "-s"};
+    SimpleString text = runAndGetOutput(2, argv);
+    STRCMP_CONTAINS("shuffling enabled with seed:", text.asCharString());
+
+    delete anotherTest;
+}
+
+TEST(CommandLineTestRunner, specificShuffleSeedIsPrintedVerbose)
+{
+    const char* argv[] = { "tests.exe", "-s2", "-v"};
+    SimpleString text = runAndGetOutput(3, argv);
+    STRCMP_CONTAINS("shuffling enabled with seed: 2", text.asCharString());
+    STRCMP_CONTAINS("shuffle seed was: 2", text.asCharString());
+}
+
 extern "C" {
     typedef PlatformSpecificFile (*FOpenFunc)(const char*, const char*);
     typedef void (*FPutsFunc)(const char*, PlatformSpecificFile);
@@ -205,7 +233,7 @@ struct FakeOutput
     }
     static PlatformSpecificFile fopen_fake(const char*, const char*)
     {
-        return (PlatformSpecificFile)0;
+        return (PlatformSpecificFile) NULLPTR;
     }
     static void fputs_fake(const char* str, PlatformSpecificFile)
     {

@@ -25,12 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "CppUTest/Shuffle.h"
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/CommandLineArguments.h"
 #include "CppUTest/PlatformSpecificFunctions.h"
 
-CommandLineArguments::CommandLineArguments(int ac, const char** av) :
-    ac_(ac), av_(av), verbose_(false), color_(false), runTestsAsSeperateProcess_(false), listTestGroupNames_(false), listTestGroupAndCaseNames_(false), runIgnored_(false), repeat_(1), groupFilters_(NULL), nameFilters_(NULL), outputType_(OUTPUT_ECLIPSE)
+CommandLineArguments::CommandLineArguments(int ac, const char *const *av) :
+    ac_(ac), av_(av), verbose_(false), color_(false), runTestsAsSeperateProcess_(false), listTestGroupNames_(false), listTestGroupAndCaseNames_(false), runIgnored_(false), repeat_(1), shuffle_(SHUFFLE_DISABLED), groupFilters_(NULLPTR), nameFilters_(NULLPTR), outputType_(OUTPUT_ECLIPSE)
 {
 }
 
@@ -69,6 +70,7 @@ bool CommandLineArguments::parse(TestPlugin* plugin)
         else if (argument.startsWith("-sn")) AddStrictNameFilter(ac_, av_, i);
         else if (argument.startsWith("-xn")) AddExcludeNameFilter(ac_, av_, i);
         else if (argument.startsWith("-xsn")) AddExcludeStrictNameFilter(ac_, av_, i);
+        else if (argument.startsWith("-s")) correctParameters = SetShuffle(ac_, av_, i);
         else if (argument.startsWith("TEST(")) AddTestToRunBasedOnVerboseOutput(ac_, av_, i, "TEST(");
         else if (argument.startsWith("IGNORE_TEST(")) AddTestToRunBasedOnVerboseOutput(ac_, av_, i, "IGNORE_TEST(");
         else if (argument.startsWith("-o")) correctParameters = SetOutputType(ac_, av_, i);
@@ -77,6 +79,7 @@ bool CommandLineArguments::parse(TestPlugin* plugin)
         else correctParameters = false;
 
         if (correctParameters == false) {
+            shuffle_ = SHUFFLE_DISABLED;
             return false;
         }
     }
@@ -85,7 +88,7 @@ bool CommandLineArguments::parse(TestPlugin* plugin)
 
 const char* CommandLineArguments::usage() const
 {
-    return "usage [-v] [-c] [-p] [-lg] [-ln] [-ri] [-r#] [-g|sg|xg|xsg groupName]... [-n|sn|xn|xsn testName]... [\"TEST(groupName, testName)\"]... [-o{normal, junit, teamcity}] [-k packageName]\n";
+    return "usage [-v] [-c] [-p] [-lg] [-ln] [-ri] [-r#] [-g|sg|xg|xsg groupName]... [-n|sn|xn|xsn testName]... [-s [randomizerSeed>0]] [\"TEST(groupName, testName)\"]... [-o{normal, junit, teamcity}] [-k packageName]\n";
 }
 
 bool CommandLineArguments::isVerbose() const
@@ -124,6 +127,11 @@ int CommandLineArguments::getRepeatCount() const
     return repeat_;
 }
 
+unsigned int CommandLineArguments::getShuffle() const
+{
+    return shuffle_;
+}
+
 const TestFilter* CommandLineArguments::getGroupFilters() const
 {
     return groupFilters_;
@@ -134,7 +142,7 @@ const TestFilter* CommandLineArguments::getNameFilters() const
     return nameFilters_;
 }
 
-void CommandLineArguments::SetRepeatCount(int ac, const char** av, int& i)
+void CommandLineArguments::SetRepeatCount(int ac, const char *const *av, int& i)
 {
     repeat_ = 0;
 
@@ -149,7 +157,27 @@ void CommandLineArguments::SetRepeatCount(int ac, const char** av, int& i)
 
 }
 
-SimpleString CommandLineArguments::getParameterField(int ac, const char** av, int& i, const SimpleString& parameterName)
+bool CommandLineArguments::SetShuffle(int ac, const char * const *av, int& i)
+{
+    shuffle_ = SHUFFLE_ENABLED_RANDOM_SEED;
+    SimpleString shuffleParameter(av[i]);
+    if (shuffleParameter.size() > 2) {
+        shuffle_ = SimpleString::AtoU(av[i] + 2);
+        if (shuffle_ == SHUFFLE_DISABLED) {
+            return false;
+        }
+    } else if (i + 1 < ac) {
+        const unsigned parsed = SimpleString::AtoU(av[i + 1]);
+        if (parsed != 0)
+        {
+            shuffle_ = parsed;
+            i++;
+        }
+    }
+    return true;
+}
+
+SimpleString CommandLineArguments::getParameterField(int ac, const char * const *av, int& i, const SimpleString& parameterName)
 {
     size_t parameterLength = parameterName.size();
     SimpleString parameter(av[i]);
@@ -158,27 +186,27 @@ SimpleString CommandLineArguments::getParameterField(int ac, const char** av, in
     return "";
 }
 
-void CommandLineArguments::AddGroupFilter(int ac, const char** av, int& i)
+void CommandLineArguments::AddGroupFilter(int ac, const char *const *av, int& i)
 {
     TestFilter* groupFilter = new TestFilter(getParameterField(ac, av, i, "-g"));
     groupFilters_ = groupFilter->add(groupFilters_);
 }
 
-void CommandLineArguments::AddStrictGroupFilter(int ac, const char** av, int& i)
+void CommandLineArguments::AddStrictGroupFilter(int ac, const char *const *av, int& i)
 {
     TestFilter* groupFilter = new TestFilter(getParameterField(ac, av, i, "-sg"));
     groupFilter->strictMatching();
     groupFilters_ = groupFilter->add(groupFilters_);
 }
 
-void CommandLineArguments::AddExcludeGroupFilter(int ac, const char** av, int& i)
+void CommandLineArguments::AddExcludeGroupFilter(int ac, const char *const *av, int& i)
 {
     TestFilter* groupFilter = new TestFilter(getParameterField(ac, av, i, "-xg"));
     groupFilter->invertMatching();
     groupFilters_ = groupFilter->add(groupFilters_);
 }
 
-void CommandLineArguments::AddExcludeStrictGroupFilter(int ac, const char** av, int& i)
+void CommandLineArguments::AddExcludeStrictGroupFilter(int ac, const char *const *av, int& i)
 {
     TestFilter* groupFilter = new TestFilter(getParameterField(ac, av, i, "-xsg"));
     groupFilter->strictMatching();
@@ -186,27 +214,27 @@ void CommandLineArguments::AddExcludeStrictGroupFilter(int ac, const char** av, 
     groupFilters_ = groupFilter->add(groupFilters_);
 }
 
-void CommandLineArguments::AddNameFilter(int ac, const char** av, int& i)
+void CommandLineArguments::AddNameFilter(int ac, const char *const *av, int& i)
 {
     TestFilter* nameFilter = new TestFilter(getParameterField(ac, av, i, "-n"));
     nameFilters_ = nameFilter->add(nameFilters_);
 }
 
-void CommandLineArguments::AddStrictNameFilter(int ac, const char** av, int& index)
+void CommandLineArguments::AddStrictNameFilter(int ac, const char *const *av, int& index)
 {
     TestFilter* nameFilter = new TestFilter(getParameterField(ac, av, index, "-sn"));
     nameFilter->strictMatching();
     nameFilters_= nameFilter->add(nameFilters_);
 }
 
-void CommandLineArguments::AddExcludeNameFilter(int ac, const char** av, int& index)
+void CommandLineArguments::AddExcludeNameFilter(int ac, const char *const *av, int& index)
 {
     TestFilter* nameFilter = new TestFilter(getParameterField(ac, av, index, "-xn"));
     nameFilter->invertMatching();
     nameFilters_= nameFilter->add(nameFilters_);
 }
 
-void CommandLineArguments::AddExcludeStrictNameFilter(int ac, const char** av, int& index)
+void CommandLineArguments::AddExcludeStrictNameFilter(int ac, const char *const *av, int& index)
 {
     TestFilter* nameFilter = new TestFilter(getParameterField(ac, av, index, "-xsn"));
     nameFilter->invertMatching();
@@ -214,7 +242,7 @@ void CommandLineArguments::AddExcludeStrictNameFilter(int ac, const char** av, i
     nameFilters_= nameFilter->add(nameFilters_);
 }
 
-void CommandLineArguments::AddTestToRunBasedOnVerboseOutput(int ac, const char** av, int& index, const char* parameterName)
+void CommandLineArguments::AddTestToRunBasedOnVerboseOutput(int ac, const char *const *av, int& index, const char* parameterName)
 {
     SimpleString wholename = getParameterField(ac, av, index, parameterName);
     SimpleString testname = wholename.subStringFromTill(',', ')');
@@ -227,7 +255,7 @@ void CommandLineArguments::AddTestToRunBasedOnVerboseOutput(int ac, const char**
     nameFilters_ = namefilter->add(nameFilters_);
 }
 
-void CommandLineArguments::SetPackageName(int ac, const char** av, int& i)
+void CommandLineArguments::SetPackageName(int ac, const char *const *av, int& i)
 {
     SimpleString packageName = getParameterField(ac, av, i, "-k");
     if (packageName.size() == 0) return;
@@ -235,7 +263,7 @@ void CommandLineArguments::SetPackageName(int ac, const char** av, int& i)
     packageName_ = packageName;
 }
 
-bool CommandLineArguments::SetOutputType(int ac, const char** av, int& i)
+bool CommandLineArguments::SetOutputType(int ac, const char *const *av, int& i)
 {
     SimpleString outputType = getParameterField(ac, av, i, "-o");
     if (outputType.size() == 0) return false;

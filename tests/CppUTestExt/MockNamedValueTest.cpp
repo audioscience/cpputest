@@ -37,7 +37,7 @@ class MyComparator : public MockNamedValueComparator
   public:
 
     MyComparator() {}
-    virtual ~MyComparator() {}
+    virtual ~MyComparator() _destructor_override {}
 
     virtual bool isEqual(const void*, const void*) _override { return false; }
     virtual SimpleString valueToString(const void*) _override { return ""; }
@@ -48,7 +48,7 @@ class MyCopier : public MockNamedValueCopier
   public:
 
     MyCopier() {}
-    virtual ~MyCopier() {}
+    virtual ~MyCopier() _destructor_override {}
 
     virtual void copy(void*, const void*) _override {}
 };
@@ -80,7 +80,7 @@ TEST(ComparatorsAndCopiersRepository, InstallComparatorsAndCopiersFromRepository
   MyCopier copier;
   MockNamedValueComparatorsAndCopiersRepository source;
   MockNamedValueComparatorsAndCopiersRepository target;
-	
+
   source.installCopier("MyType", copier);
   source.installComparator("MyType", comparator);
   
@@ -93,3 +93,49 @@ TEST(ComparatorsAndCopiersRepository, InstallComparatorsAndCopiersFromRepository
   target.clear();
 }
 
+TEST_GROUP(MockNamedValue)
+{
+  MockNamedValue * value;
+  void setup()
+  {
+    value = new MockNamedValue("param");
+  }
+
+  void teardown()
+  {
+    delete value;
+  }
+};
+
+TEST(MockNamedValue, DefaultToleranceUsedWhenNoToleranceGiven)
+{
+  value->setValue(0.2);
+  DOUBLES_EQUAL(MockNamedValue::defaultDoubleTolerance, value->getDoubleTolerance(), 0.0);
+}
+
+TEST(MockNamedValue, GivenToleranceUsed)
+{
+  value->setValue(0.2, 3.2);
+  STRCMP_EQUAL("double", value->getType().asCharString());
+  DOUBLES_EQUAL(0.2, value->getDoubleValue(), 0.0);
+  DOUBLES_EQUAL(3.2, value->getDoubleTolerance(), 0.0);
+}
+
+TEST(MockNamedValue, DoublesEqualIfWithinTolerance)
+{
+  value->setValue(5.0, 0.4);
+  MockNamedValue other("param2");
+  other.setValue(5.3);
+
+  CHECK_TRUE(value->equals(other));
+}
+
+
+TEST(MockNamedValue, DoublesNotEqualIfOutsideTolerance)
+{
+  value->setValue(5.0, 0.4);
+  MockNamedValue other("param2");
+  other.setValue(5.5);
+
+  CHECK_FALSE(value->equals(other));
+}

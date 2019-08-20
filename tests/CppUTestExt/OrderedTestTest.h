@@ -25,14 +25,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "CppUTest/CommandLineTestRunner.h"
+#ifndef ORDEREDTESTTEST_H
+#define ORDEREDTESTTEST_H
 
-int main(int ac, char **av)
-{
-    /* These checks are here to make sure assertions outside test runs don't crash */
-    CHECK(true);
-    LONGS_EQUAL(1, 1);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    return CommandLineTestRunner::RunAllTests(ac, av); /* cover alternate method */
+extern int orderedTestFixtureCWrapper(void);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* ORDEREDTESTTEST_H */
 

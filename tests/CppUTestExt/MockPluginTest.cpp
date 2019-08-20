@@ -65,7 +65,7 @@ TEST(MockPlugin, checkExpectationsAndClearAtEnd)
 
     plugin.postTestAction(*test, *result);
 
-    STRCMP_CONTAINS(expectedFailure.getMessage().asCharString(), output.getOutput().asCharString())
+    STRCMP_CONTAINS(expectedFailure.getMessage().asCharString(), output.getOutput().asCharString());
     LONGS_EQUAL(0, mock().expectedCallsLeft());
     CHECK_NO_MOCK_FAILURE();
 }
@@ -83,7 +83,7 @@ TEST(MockPlugin, checkExpectationsWorksAlsoWithHierachicalObjects)
 
     plugin.postTestAction(*test, *result);
 
-    STRCMP_CONTAINS(expectedFailure.getMessage().asCharString(), output.getOutput().asCharString())
+    STRCMP_CONTAINS(expectedFailure.getMessage().asCharString(), output.getOutput().asCharString());
     CHECK_NO_MOCK_FAILURE();
 }
 
@@ -106,8 +106,8 @@ TEST(MockPlugin, installComparatorRecordsTheComparatorButNotInstallsItYet)
 
     DummyComparator comparator;
     plugin.installComparator("myType", comparator);
-    mock().expectOneCall("foo").withParameterOfType("myType", "name", NULL);
-    mock().actualCall("foo").withParameterOfType("myType", "name", NULL);
+    mock().expectOneCall("foo").withParameterOfType("myType", "name", NULLPTR);
+    mock().actualCall("foo").withParameterOfType("myType", "name", NULLPTR);
 
     MockNoWayToCompareCustomTypeFailure failure(test, "myType");
     CHECK_EXPECTED_MOCK_FAILURE(failure);
@@ -128,8 +128,8 @@ TEST(MockPlugin, installCopierRecordsTheCopierButNotInstallsItYet)
 
     DummyCopier copier;
     plugin.installCopier("myType", copier);
-    mock().expectOneCall("foo").withOutputParameterOfTypeReturning("myType", "name", NULL);
-    mock().actualCall("foo").withOutputParameterOfType("myType", "name", NULL);
+    mock().expectOneCall("foo").withOutputParameterOfTypeReturning("myType", "name", NULLPTR);
+    mock().actualCall("foo").withOutputParameterOfType("myType", "name", NULLPTR);
 
     MockNoWayToCopyCustomTypeFailure failure(test, "myType");
     CHECK_EXPECTED_MOCK_FAILURE(failure);

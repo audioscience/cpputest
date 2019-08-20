@@ -46,14 +46,14 @@ public:
     {
     }
 
-    virtual bool parseArguments(int /* ac */, const char** /* av */, int /* index */ )
+    virtual bool parseArguments(int /* ac */, const char *const * /* av */, int /* index */ )
     {
         return false;
     }
 
     virtual void runAllPreTestAction(UtestShell&, TestResult&);
     virtual void runAllPostTestAction(UtestShell&, TestResult&);
-    virtual bool parseAllArguments(int ac, const char** av, int index);
+    virtual bool parseAllArguments(int ac, const char *const *av, int index);
     virtual bool parseAllArguments(int ac, char** av, int index);
 
     virtual TestPlugin* addPlugin(TestPlugin*);
@@ -98,7 +98,7 @@ public:
     };
 };
 
-#define UT_PTR_SET(a, b) { CppUTestStore( (void**)&a ); a = b; }
+#define UT_PTR_SET(a, b) do { CppUTestStore( (void**)&a ); a = b; } while(0)
 
 ///////////// Null Plugin
 

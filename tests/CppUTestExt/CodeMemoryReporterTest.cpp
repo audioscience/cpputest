@@ -30,8 +30,8 @@
 #include "CppUTestExt/MemoryReportAllocator.h"
 #include "CppUTestExt/CodeMemoryReportFormatter.h"
 
-#define TESTOUTPUT_EQUAL(a) STRCMP_EQUAL_LOCATION(a, testOutput.getOutput().asCharString(), "", __FILE__, __LINE__);
-#define TESTOUTPUT_CONTAINS(a) STRCMP_CONTAINS_LOCATION(a, testOutput.getOutput().asCharString(), "", __FILE__, __LINE__);
+#define TESTOUTPUT_EQUAL(a) STRCMP_EQUAL_LOCATION(a, testOutput.getOutput().asCharString(), "", __FILE__, __LINE__)
+#define TESTOUTPUT_CONTAINS(a) STRCMP_CONTAINS_LOCATION(a, testOutput.getOutput().asCharString(), "", __FILE__, __LINE__)
 
 TEST_GROUP(CodeMemoryReportFormatter)
 {
@@ -124,7 +124,7 @@ TEST(CodeMemoryReportFormatter, NewAllocatorGeneratesDeleteCode)
 
 TEST(CodeMemoryReportFormatter, DeleteNullWorksFine)
 {
-    formatter->report_free_memory(testResult, newAllocator, NULL, "boo", 4);
+    formatter->report_free_memory(testResult, newAllocator, NULLPTR, "boo", 4);
     TESTOUTPUT_CONTAINS("delete [] NULL; /* using delete at boo:4 */");
 }
 

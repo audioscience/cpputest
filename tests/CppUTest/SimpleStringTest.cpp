@@ -38,11 +38,11 @@ public:
 
     char* alloc_memory(size_t size, const char* file, int line)
     {
-      return MemoryLeakWarningPlugin::getGlobalDetector()->allocMemory(getCurrentNewArrayAllocator(), size, (char*) file, line);
+      return MemoryLeakWarningPlugin::getGlobalDetector()->allocMemory(getCurrentNewArrayAllocator(), size, file, line);
     }
     void free_memory(char* str, const char* file, int line)
     {
-      MemoryLeakWarningPlugin::getGlobalDetector()->deallocMemory(getCurrentNewArrayAllocator(), str, (char*) file, line);
+      MemoryLeakWarningPlugin::getGlobalDetector()->deallocMemory(getCurrentNewArrayAllocator(), str, file, line);
     }
 };
 
@@ -56,13 +56,13 @@ TEST_GROUP(SimpleString)
   }
   void teardown()
   {
-    SimpleString::setStringAllocator(NULL);
+    SimpleString::setStringAllocator(NULLPTR);
   }
 };
 
 TEST(SimpleString, defaultAllocatorIsNewArrayAllocator)
 {
-  SimpleString::setStringAllocator(NULL);
+  SimpleString::setStringAllocator(NULLPTR);
   POINTERS_EQUAL(getCurrentNewArrayAllocator(), SimpleString::getStringAllocator());
 }
 
@@ -86,7 +86,7 @@ TEST(SimpleString, allocatorForSimpleStringCanBeReplaced)
     SimpleString::setStringAllocator(&myOwnAllocator);
     SimpleString simpleString;
     CHECK(myOwnAllocator.memoryWasAllocated);
-    SimpleString::setStringAllocator(NULL);
+    SimpleString::setStringAllocator(NULLPTR);
 }
 
 TEST(SimpleString, CreateSequence)
@@ -433,9 +433,9 @@ TEST(SimpleString, copyInBufferNormal)
 TEST(SimpleString, copyInBufferWithEmptyBuffer)
 {
     SimpleString str("Hello World");
-    char* buffer= NULL;
+    char* buffer= NULLPTR;
     str.copyToBuffer(buffer, 0);
-    POINTERS_EQUAL(NULL, buffer);
+    POINTERS_EQUAL(NULLPTR, buffer);
 }
 
 TEST(SimpleString, copyInBufferWithBiggerBufferThanNeeded)
@@ -461,13 +461,13 @@ TEST(SimpleString, copyInBufferWithSmallerBufferThanNeeded)
 
 TEST(SimpleString, ContainsNull)
 {
-    SimpleString s(0);
+    SimpleString s(NULLPTR);
     STRCMP_EQUAL("", s.asCharString());
 }
 
 TEST(SimpleString, NULLReportsNullString)
 {
-    STRCMP_EQUAL("(null)", StringFromOrNull((char*) NULL).asCharString());
+    STRCMP_EQUAL("(null)", StringFromOrNull((char*) NULLPTR).asCharString());
 }
 
 TEST(SimpleString, Booleans)
@@ -572,6 +572,14 @@ TEST(SimpleString, Sizes)
     STRCMP_EQUAL("10", StringFrom((int) size).asCharString());
 }
 
+#if __cplusplus > 199711L
+TEST(SimpleString, nullptr_type)
+{
+    SimpleString s(StringFrom(nullptr));
+    STRCMP_EQUAL("(null)", s.asCharString());
+}
+#endif
+
 TEST(SimpleString, HexStrings)
 {
     STRCMP_EQUAL("f3", HexStringFrom((signed char)-13).asCharString());
@@ -602,17 +610,17 @@ TEST(SimpleString, StringFromFormatpointer)
     //this is not a great test. but %p is odd on mingw and even more odd on Solaris.
     SimpleString h1 = StringFromFormat("%p", (void*) 1);
     if (h1.size() == 3)
-        STRCMP_EQUAL("0x1", h1.asCharString())
+        STRCMP_EQUAL("0x1", h1.asCharString());
     else if (h1.size() == 8)
-        STRCMP_EQUAL("00000001", h1.asCharString())
+        STRCMP_EQUAL("00000001", h1.asCharString());
     else if (h1.size() == 9)
-        STRCMP_EQUAL("0000:0001", h1.asCharString())
+        STRCMP_EQUAL("0000:0001", h1.asCharString());
     else if (h1.size() == 16)
-        STRCMP_EQUAL("0000000000000001", h1.asCharString())
+        STRCMP_EQUAL("0000000000000001", h1.asCharString());
     else if (h1.size() == 1)
-        STRCMP_EQUAL("1", h1.asCharString())
+        STRCMP_EQUAL("1", h1.asCharString());
     else
-        FAIL("Off %p behavior")
+        FAIL("Off %p behavior");
 }
 
 TEST(SimpleString, StringFromFormatLarge)
@@ -831,7 +839,7 @@ TEST(SimpleString, StrNCpy_zero_termination)
 
 TEST(SimpleString, StrNCpy_null_proof)
 {
-    POINTERS_EQUAL(NULL, SimpleString::StrNCpy(NULL, "woman", 6));
+    POINTERS_EQUAL(NULLPTR, SimpleString::StrNCpy(NULLPTR, "woman", 6));
 }
 
 TEST(SimpleString, StrNCpy_stops_at_end_of_string)
@@ -908,9 +916,9 @@ TEST(SimpleString, StrStr)
     char foobarfoo[] = "foobarfoo";
     char barf[] = "barf";
     CHECK(SimpleString::StrStr(foo, empty) == foo);
-    CHECK(SimpleString::StrStr(empty, foo) == 0);
+    CHECK(SimpleString::StrStr(empty, foo) == NULLPTR);
     CHECK(SimpleString::StrStr(foobarfoo, barf) == foobarfoo+3);
-    CHECK(SimpleString::StrStr(barf, foobarfoo) == 0);
+    CHECK(SimpleString::StrStr(barf, foobarfoo) == NULLPTR);
     CHECK(SimpleString::StrStr(foo, foo) == foo);
 }
 
@@ -931,6 +939,23 @@ TEST(SimpleString, AtoI)
     CHECK(32767  == SimpleString::AtoI(max_short_str));
 }
 
+TEST(SimpleString, AtoU)
+{
+    char max_short_str[] = "65535";
+    CHECK(12345  == SimpleString::AtoU("012345"));
+    CHECK(6789   == SimpleString::AtoU("6789"));
+    CHECK(12345  == SimpleString::AtoU("12345/"));
+    CHECK(12345  == SimpleString::AtoU("12345:"));
+    CHECK(123    == SimpleString::AtoU("\t \r\n123"));
+    CHECK(123    == SimpleString::AtoU("123-foo"));
+    CHECK(65535  == SimpleString::AtoU(max_short_str));
+    CHECK(0      == SimpleString::AtoU("foo"));
+    CHECK(0      == SimpleString::AtoU("-foo"));
+    CHECK(0      == SimpleString::AtoU("+1"));
+    CHECK(0      == SimpleString::AtoU("-1"));
+    CHECK(0      == SimpleString::AtoU("0"));
+}
+
 TEST(SimpleString, Binary)
 {
     const unsigned char value[] = { 0x00, 0x01, 0x2A, 0xFF };
@@ -939,7 +964,7 @@ TEST(SimpleString, Binary)
     STRCMP_EQUAL(expectedString, StringFromBinary(value, sizeof(value)).asCharString());
     STRCMP_EQUAL(expectedString, StringFromBinaryOrNull(value, sizeof(value)).asCharString());
     STRCMP_EQUAL("", StringFromBinary(value, 0).asCharString());
-    STRCMP_EQUAL("(null)", StringFromBinaryOrNull(NULL, 0).asCharString());
+    STRCMP_EQUAL("(null)", StringFromBinaryOrNull(NULLPTR, 0).asCharString());
 }
 
 TEST(SimpleString, BinaryWithSize)
@@ -950,7 +975,7 @@ TEST(SimpleString, BinaryWithSize)
     STRCMP_EQUAL(expectedString, StringFromBinaryWithSize(value, sizeof(value)).asCharString());
     STRCMP_EQUAL(expectedString, StringFromBinaryWithSizeOrNull(value, sizeof(value)).asCharString());
     STRCMP_EQUAL("Size = 0 | HexContents = ", StringFromBinaryWithSize(value, 0).asCharString());
-    STRCMP_EQUAL("(null)", StringFromBinaryWithSizeOrNull(NULL, 0).asCharString());
+    STRCMP_EQUAL("(null)", StringFromBinaryWithSizeOrNull(NULLPTR, 0).asCharString());
 }
 
 TEST(SimpleString, BinaryWithSizeLargerThan128)
@@ -970,7 +995,7 @@ TEST(SimpleString, MemCmp)
     LONGS_EQUAL(0, SimpleString::MemCmp(smaller, smaller, sizeof(smaller)));
     CHECK(SimpleString::MemCmp(smaller, greater, sizeof(smaller)) < 0);
     CHECK(SimpleString::MemCmp(greater, smaller, sizeof(smaller)) > 0);
-    LONGS_EQUAL(0, SimpleString::MemCmp(NULL, NULL, 0));
+    LONGS_EQUAL(0, SimpleString::MemCmp(NULLPTR, NULLPTR, 0));
 }
 
 TEST(SimpleString, MemCmpFirstLastNotMatching)

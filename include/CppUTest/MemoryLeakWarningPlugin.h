@@ -31,8 +31,8 @@
 #include "TestPlugin.h"
 #include "MemoryLeakDetectorNewMacros.h"
 
-#define IGNORE_ALL_LEAKS_IN_TEST() MemoryLeakWarningPlugin::getFirstPlugin()->ignoreAllLeaksInTest();
-#define EXPECT_N_LEAKS(n)          MemoryLeakWarningPlugin::getFirstPlugin()->expectLeaksInTest(n);
+#define IGNORE_ALL_LEAKS_IN_TEST() MemoryLeakWarningPlugin::getFirstPlugin()->ignoreAllLeaksInTest()
+#define EXPECT_N_LEAKS(n)          MemoryLeakWarningPlugin::getFirstPlugin()->expectLeaksInTest(n)
 
 extern void crash_on_allocation_number(unsigned alloc_number);
 
@@ -42,8 +42,8 @@ class MemoryLeakFailure;
 class MemoryLeakWarningPlugin: public TestPlugin
 {
 public:
-    MemoryLeakWarningPlugin(const SimpleString& name, MemoryLeakDetector* localDetector = 0);
-    virtual ~MemoryLeakWarningPlugin();
+    MemoryLeakWarningPlugin(const SimpleString& name, MemoryLeakDetector* localDetector = NULLPTR);
+    virtual ~MemoryLeakWarningPlugin() _destructor_override;
 
     virtual void preTestAction(UtestShell& test, TestResult& result) _override;
     virtual void postTestAction(UtestShell& test, TestResult& result) _override;

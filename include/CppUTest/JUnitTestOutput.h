@@ -38,7 +38,7 @@ class JUnitTestOutput: public TestOutput
 {
 public:
     JUnitTestOutput();
-    virtual ~JUnitTestOutput();
+    virtual ~JUnitTestOutput() _destructor_override;
 
     virtual void printTestsStarted() _override;
     virtual void printTestsEnded(const TestResult& result) _override;
@@ -71,6 +71,7 @@ protected:
     virtual void writeTestSuiteSummary();
     virtual void writeProperties();
     virtual void writeTestCases();
+    virtual SimpleString encodeXmlText(const SimpleString& textbody);
     virtual void writeFailure(JUnitTestCaseResultNode* node);
     virtual void writeFileEnding();
 

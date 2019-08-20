@@ -45,7 +45,7 @@ MockFailureReporterInstaller::MockFailureReporterInstaller()
 
 MockFailureReporterInstaller::~MockFailureReporterInstaller()
 {
-  mock().setMockFailureStandardReporter(NULL);
+  mock().setMockFailureStandardReporter(NULLPTR);
 }
 
 UtestShell* mockFailureTest()
@@ -99,6 +99,14 @@ MockExpectedCallsListForTest::~MockExpectedCallsListForTest()
 MockCheckedExpectedCall* MockExpectedCallsListForTest::addFunction(const SimpleString& name)
 {
   MockCheckedExpectedCall* newCall = new MockCheckedExpectedCall;
+  newCall->withName(name);
+  addExpectedCall(newCall);
+  return newCall;
+}
+
+MockCheckedExpectedCall* MockExpectedCallsListForTest::addFunction(unsigned int numCalls, const SimpleString& name)
+{
+  MockCheckedExpectedCall* newCall = new MockCheckedExpectedCall(numCalls);
   newCall->withName(name);
   addExpectedCall(newCall);
   return newCall;

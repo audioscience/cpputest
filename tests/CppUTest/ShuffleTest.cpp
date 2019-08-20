@@ -25,14 +25,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "CppUTest/CommandLineTestRunner.h"
+#include "CppUTest/Shuffle.h"
+#include "CppUTest/TestHarness.h"
+#include "CppUTest/TestOutput.h"
 
-int main(int ac, char **av)
+TEST_GROUP(ShuffleTest)
 {
-    /* These checks are here to make sure assertions outside test runs don't crash */
-    CHECK(true);
-    LONGS_EQUAL(1, 1);
+};
 
-    return CommandLineTestRunner::RunAllTests(ac, av); /* cover alternate method */
+static const int maxNumItems = 3;
+
+static int getZero()
+{
+    return 0;
 }
 
+static int getOne()
+{
+    return 1;
+}
+
+static int getValueExceedingMaxIdx()
+{
+    return maxNumItems + 1;
+}
+
+TEST(ShuffleTest, ShuffleListTest)
+{
+    int x0 = 0;
+    int x1 = 1;
+    int x2 = 2;
+    void* tests[maxNumItems] = {&x0, &x1, &x2};
+
+    // check no-op
+    shuffle_list(getValueExceedingMaxIdx, 0, tests);
+    CHECK(tests[0] == &x0);
+    CHECK(tests[1] == &x1);
+    CHECK(tests[2] == &x2);
+
+    // swap element with itself: 0, [1], 2 --> 0, 1, 2
+    shuffle_list(getOne, 1, tests);
+    CHECK(tests[0] == &x0);
+    CHECK(tests[1] == &x1);
+    CHECK(tests[2] == &x2);
+
+    // always swaps with element at index 0: [0], 1, [2] --> [2], [1], 0 --> 1, 2, 0
+    shuffle_list(getZero, maxNumItems, tests);
+    CHECK(tests[0] == &x1);
+    CHECK(tests[1] == &x2);
+    CHECK(tests[2] == &x0);
+
+    // swaps with 4 mod 3 (1) then 4 mod 2 (0): 1, [2], [0] --> [1], [0], 2 --> 0, 1, 2
+    shuffle_list(getValueExceedingMaxIdx, maxNumItems, tests);
+    CHECK(tests[0] == &x0);
+    CHECK(tests[1] == &x1);
+    CHECK(tests[2] == &x2);
+}

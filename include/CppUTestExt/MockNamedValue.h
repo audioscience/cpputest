@@ -27,6 +27,9 @@
 
 #ifndef D_MockNamedValue_h
 #define D_MockNamedValue_h
+
+#include "CppUTest/CppUTestConfig.h"
+
 /*
  * MockNamedValueComparator is an interface that needs to be used when creating Comparators.
  * This is needed when comparing values of non-native type.
@@ -106,13 +109,17 @@ public:
     virtual void setValue(unsigned int value);
     virtual void setValue(long int value);
     virtual void setValue(unsigned long int value);
+    virtual void setValue(cpputest_longlong value);
+    virtual void setValue(cpputest_ulonglong value);
     virtual void setValue(double value);
+    virtual void setValue(double value, double tolerance);
     virtual void setValue(void* value);
     virtual void setValue(const void* value);
     virtual void setValue(void (*value)());
     virtual void setValue(const char* value);
     virtual void setMemoryBuffer(const unsigned char* value, size_t size);
-    virtual void setObjectPointer(const SimpleString& type, const void* objectPtr);
+    virtual void setConstObjectPointer(const SimpleString& type, const void* objectPtr);
+    virtual void setObjectPointer(const SimpleString& type, void* objectPtr);
     virtual void setSize(size_t size);
 
     virtual void setName(const char* name);
@@ -130,19 +137,26 @@ public:
     virtual unsigned int getUnsignedIntValue() const;
     virtual long int getLongIntValue() const;
     virtual unsigned long int getUnsignedLongIntValue() const;
+    virtual cpputest_longlong getLongLongIntValue() const;
+    virtual cpputest_ulonglong getUnsignedLongLongIntValue() const;
     virtual double getDoubleValue() const;
+    virtual double getDoubleTolerance() const;
     virtual const char* getStringValue() const;
     virtual void* getPointerValue() const;
     virtual const void* getConstPointerValue() const;
     virtual void (*getFunctionPointerValue() const)();
     virtual const unsigned char* getMemoryBuffer() const;
-    virtual const void* getObjectPointer() const;
+    virtual const void* getConstObjectPointer() const;
+    virtual void* getObjectPointer() const;
     virtual size_t getSize() const;
+
 
     virtual MockNamedValueComparator* getComparator() const;
     virtual MockNamedValueCopier* getCopier() const;
 
     static void setDefaultComparatorsAndCopiersRepository(MockNamedValueComparatorsAndCopiersRepository* repository);
+
+    static const double defaultDoubleTolerance;
 private:
     SimpleString name_;
     SimpleString type_;
@@ -152,13 +166,23 @@ private:
         unsigned int unsignedIntValue_;
         long int longIntValue_;
         unsigned long int unsignedLongIntValue_;
-        double doubleValue_;
+#ifdef CPPUTEST_USE_LONG_LONG
+        cpputest_longlong longLongIntValue_;
+        cpputest_ulonglong unsignedLongLongIntValue_;
+#else
+        char longLongPlaceholder_[CPPUTEST_SIZE_OF_FAKE_LONG_LONG_TYPE];
+#endif
+        struct {
+            double value;
+            double tolerance;
+        } doubleValue_;
         const char* stringValue_;
         void* pointerValue_;
         const void* constPointerValue_;
         void (*functionPointerValue_)();
         const unsigned char* memoryBufferValue_;
-        const void* objectPointerValue_;
+        const void* constObjectPointerValue_;
+        void* objectPointerValue_;
         const void* outputPointerValue_;
     } value_;
     size_t size_;

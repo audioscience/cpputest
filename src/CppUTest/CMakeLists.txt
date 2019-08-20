@@ -31,7 +31,7 @@ endif(CPP_PLATFORM)
 target_include_directories(CppUTest
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
-        $<INSTALL_INTERFACE:include/CppUTest>
+        $<INSTALL_INTERFACE:include>
 )
 
 set(CppUTest_headers
@@ -60,14 +60,19 @@ set(CppUTest_headers
         ${CppUTestRootDirectory}/include/CppUTest/MemoryLeakWarningPlugin.h
         ${CppUTestRootDirectory}/include/CppUTest/TestHarness_c.h
         ${CppUTestRootDirectory}/include/CppUTest/UtestMacros.h
+        ${CppUTestRootDirectory}/include/CppUTest/Shuffle.h
+        ${CppUTestRootDirectory}/include/CppUTest/SimpleMutex.h
 )
+
+set_target_properties(CppUTest PROPERTIES
+    PUBLIC_HEADER "${CppUTest_headers}")
 
 if (WIN32)
     target_link_libraries(CppUTest winmm.lib)
 endif (WIN32)
-install(FILES ${CppUTest_headers} DESTINATION include/CppUTest)
 install(TARGETS CppUTest
     EXPORT CppUTestTargets
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/CppUTest"
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/CppUTest")

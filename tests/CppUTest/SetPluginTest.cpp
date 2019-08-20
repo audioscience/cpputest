@@ -41,7 +41,7 @@ TEST_GROUP(SetPointerPluginTest)
 
     void teardown()
     {
-        myRegistry_->setCurrentRegistry(0);
+        myRegistry_->setCurrentRegistry(NULLPTR);
         delete myRegistry_;
         delete plugin_;
         delete output_;
@@ -77,7 +77,6 @@ public:
 TEST(SetPointerPluginTest, installTwoFunctionPointer)
 {
     FunctionPointerUtestShell *tst = new FunctionPointerUtestShell();
-    ;
 
     fp1 = orig_func1;
     fp2 = orig_func2;

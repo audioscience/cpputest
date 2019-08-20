@@ -30,11 +30,11 @@
 #include "CppUTest/PlatformSpecificFunctions.h"
 #include "CppUTest/TestMemoryAllocator.h"
 
-TestMemoryAllocator* SimpleString::stringAllocator_ = NULL;
+TestMemoryAllocator* SimpleString::stringAllocator_ = NULLPTR;
 
 TestMemoryAllocator* SimpleString::getStringAllocator()
 {
-    if (stringAllocator_ == NULL)
+    if (stringAllocator_ == NULLPTR)
         return defaultNewArrayAllocator();
     return stringAllocator_;
 }
@@ -62,6 +62,20 @@ char* SimpleString::getEmptyString() const
     return empty;
 }
 
+// does not support + or - prefixes
+unsigned SimpleString::AtoU(const char* str)
+{
+    while (isSpace(*str)) str++;
+
+    unsigned result = 0;
+    for(; isDigit(*str) && *str >= '0'; str++)
+    {
+        result *= 10;
+        result += static_cast<unsigned>(*str - '0');
+    }
+    return result;
+}
+
 int SimpleString::AtoI(const char* str)
 {
     while (isSpace(*str)) str++;
@@ -84,7 +98,7 @@ int SimpleString::StrCmp(const char* s1, const char* s2)
        ++s1;
        ++s2;
    }
-   return *(unsigned char *) s1 - *(unsigned char *) s2;
+   return *(const unsigned char *) s1 - *(const unsigned char *) s2;
 }
 
 size_t SimpleString::StrLen(const char* str)
@@ -101,27 +115,27 @@ int SimpleString::StrNCmp(const char* s1, const char* s2, size_t n)
         ++s1;
         ++s2;
     }
-    return n ? *(unsigned char *) s1 - *(unsigned char *) s2 : 0;
+    return n ? *(const unsigned char *) s1 - *(const unsigned char *) s2 : 0;
 }
 
 char* SimpleString::StrNCpy(char* s1, const char* s2, size_t n)
 {
     char* result = s1;
 
-    if((NULL == s1) || (0 == n)) return result;
+    if((NULLPTR == s1) || (0 == n)) return result;
 
     while ((*s1++ = *s2++) && --n != 0)
         ;
     return result;
 }
 
-char* SimpleString::StrStr(const char* s1, const char* s2)
+const char* SimpleString::StrStr(const char* s1, const char* s2)
 {
-    if(!*s2) return (char*) s1;
+    if(!*s2) return s1;
     for (; *s1; s1++)
         if (StrNCmp(s1, s2, StrLen(s2)) == 0)
-            return (char*) s1;
-    return NULL;
+            return s1;
+    return NULLPTR;
 }
 
 char SimpleString::ToLower(char ch)
@@ -146,7 +160,7 @@ int SimpleString::MemCmp(const void* s1, const void *s2, size_t n)
 
 SimpleString::SimpleString(const char *otherBuffer)
 {
-    if (otherBuffer == 0) {
+    if (otherBuffer == NULLPTR) {
         buffer_ = getEmptyString();
     }
     else {
@@ -183,7 +197,7 @@ SimpleString& SimpleString::operator=(const SimpleString& other)
 
 bool SimpleString::contains(const SimpleString& other) const
 {
-    return StrStr(buffer_, other.buffer_) != 0;
+    return StrStr(buffer_, other.buffer_) != NULLPTR;
 }
 
 bool SimpleString::containsNoCase(const SimpleString& other) const
@@ -211,7 +225,7 @@ bool SimpleString::endsWith(const SimpleString& other) const
 size_t SimpleString::count(const SimpleString& substr) const
 {
     size_t num = 0;
-    char* str = buffer_;
+    const char* str = buffer_;
     while (*str && (str = StrStr(str, substr.buffer_))) {
         num++;
         str++;
@@ -225,8 +239,8 @@ void SimpleString::split(const SimpleString& delimiter, SimpleStringCollection& 
     size_t extraEndToken = (endsWith(delimiter)) ? 0 : 1U;
     col.allocate(num + extraEndToken);
 
-    char* str = buffer_;
-    char* prev;
+    const char* str = buffer_;
+    const char* prev;
     for (size_t i = 0; i < num; ++i) {
         prev = str;
         str = StrStr(str, delimiter.buffer_) + 1;
@@ -248,6 +262,9 @@ void SimpleString::replace(char to, char with)
 void SimpleString::replace(const char* to, const char* with)
 {
     size_t c = count(to);
+    if (c == 0) {
+        return;
+    }
     size_t len = size();
     size_t tolen = StrLen(to);
     size_t withlen = StrLen(with);
@@ -421,7 +438,7 @@ char* SimpleString::copyToNewBuffer(const char* bufferToCopy, size_t bufferSize)
 
 void SimpleString::copyToBuffer(char* bufferToCopy, size_t bufferSize) const
 {
-    if (bufferToCopy == NULL || bufferSize == 0) return;
+    if (bufferToCopy == NULLPTR || bufferSize == 0) return;
 
     size_t sizeToCopy = (bufferSize-1 < size()) ? (bufferSize-1) : size();
 
@@ -540,6 +557,16 @@ SimpleString BracketsFormattedHexString(SimpleString hexString)
     return SimpleString("(0x") + hexString + ")" ;
 }
 
+/*
+ * ARM compiler has only partial support for C++11.
+ * Specifically std::nullptr_t is not officially supported
+ */
+#if __cplusplus > 199711L && !defined __arm__
+SimpleString StringFrom(const std::nullptr_t __attribute__((unused)) value)
+{
+    return "(null)";
+}
+#endif
 
 #ifdef CPPUTEST_USE_LONG_LONG
 
@@ -816,7 +843,7 @@ SimpleString StringFromOrdinalNumber(unsigned int number)
 
 SimpleStringCollection::SimpleStringCollection()
 {
-    collection_ = 0;
+    collection_ = NULLPTR;
     size_ = 0;
 }
 

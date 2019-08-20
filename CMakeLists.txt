@@ -7,6 +7,15 @@ set(CppUTest_version_minor 8)
 # 3.1 is needed for target_sources
 cmake_minimum_required(VERSION 3.1)
 
+###############
+# Conan support
+###############
+if (EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    message(STATUS "conan_basic_setup()")
+    conan_basic_setup()
+endif()
+
 # Check for functions before setting a lot of stuff
 include(CheckFunctionExists)
 set (CMAKE_REQUIRED_INCLUDES "unistd.h")
@@ -50,6 +59,8 @@ option(WERROR "Compile with warnings as errors" OFF)
 option(TESTS "Compile and make tests for the code?" ON)
 option(TESTS_DETAILED "Run each test separately instead of grouped?" OFF)
 
+option(VERBOSE_CONFIG "Print configuration to stdout during generation" ON)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "What kind of build this is" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -67,6 +78,7 @@ include(CTest)
 #include("${CppUTestRootDirectory}/cmake/Modules/CheckFunctionExists.cmake")
 include("${CppUTestRootDirectory}/cmake/Modules/CppUTestBuildTimeDiscoverTests.cmake")
 include("${CppUTestRootDirectory}/cmake/Modules/CppUTestNormalizeTestOutputLocation.cmake")
+include(GNUInstallDirs)
 
 configure_file (
     "${PROJECT_SOURCE_DIR}/config.h.cmake"
@@ -89,8 +101,8 @@ if (TESTS)
     endif (EXTENSIONS)
 endif (TESTS)
 
-set (INCLUDE_INSTALL_DIR "include")
-set (LIB_INSTALL_DIR "lib")
+set (INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
+set (LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
 set (INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Pkg-config file.
@@ -129,6 +141,10 @@ if(PkgHelpers_AVAILABLE)
     DESTINATION ${LIB_INSTALL_DIR}/CppUTest/cmake )
   install(EXPORT CppUTestTargets
     DESTINATION ${LIB_INSTALL_DIR}/CppUTest/cmake)
+  install(FILES  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Scripts/CppUTestBuildTimeDiscoverTests.cmake
+    DESTINATION ${LIB_INSTALL_DIR}/CppUTest/cmake/Scripts)
+  install(FILES  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/CppUTestBuildTimeDiscoverTests.cmake
+    DESTINATION ${LIB_INSTALL_DIR}/CppUTest/cmake/Modules)
   configure_package_config_file(CppUTestConfig.cmake.build.in
     ${CMAKE_CURRENT_BINARY_DIR}/CppUTestConfig.cmake
     INSTALL_DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
@@ -151,7 +167,8 @@ else()
     " or write generators for CppUTestConfig.cmake by yourself.")
 endif()
 
-message("
+if(VERBOSE_CONFIG)
+  message("
 -------------------------------------------------------
 CppUTest Version ${CppUTest_version_major}.${CppUTest_version_minor}
 
@@ -180,3 +197,4 @@ Features configured in CppUTest:
 
 -------------------------------------------------------
 ")
+endif()

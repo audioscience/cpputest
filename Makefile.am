@@ -66,6 +66,7 @@ include_cpputest_HEADERS = \
 	include/CppUTest/MemoryLeakWarningPlugin.h \
 	include/CppUTest/PlatformSpecificFunctions.h \
 	include/CppUTest/PlatformSpecificFunctions_c.h \
+	include/CppUTest/Shuffle.h \
 	include/CppUTest/SimpleString.h \
 	include/CppUTest/SimpleMutex.h \
 	include/CppUTest/StandardCLibrary.h \
@@ -153,6 +154,7 @@ CppUTestTests_SOURCES = \
 	tests/CppUTest/SetPluginTest.cpp \
 	tests/CppUTest/SimpleStringTest.cpp \
 	tests/CppUTest/SimpleMutexTest.cpp \
+	tests/CppUTest/ShuffleTest.cpp \
 	tests/CppUTest/TeamCityOutputTest.cpp \
 	tests/CppUTest/TestFailureNaNTest.cpp \
 	tests/CppUTest/TestFailureTest.cpp \
@@ -203,7 +205,9 @@ CppUTestExtTests_SOURCES = \
 	tests/CppUTestExt/MockSupport_cTestCFile.c \
 	tests/CppUTestExt/MockStrictOrderTest.cpp \
 	tests/CppUTestExt/MockReturnValueTest.cpp \
-	tests/CppUTestExt/OrderedTestTest.cpp
+	tests/CppUTestExt/OrderedTestTest.cpp \
+	tests/CppUTestExt/OrderedTestTest_c.c \
+	tests/CppUTestExt/MockFakeLongLong.cpp
 
 DISTCLEANFILES = \
 	filename.map.txt \

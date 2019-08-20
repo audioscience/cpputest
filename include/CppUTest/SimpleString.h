@@ -93,11 +93,12 @@ public:
     static void setStringAllocator(TestMemoryAllocator* allocator);
 
     static int AtoI(const char*str);
+    static unsigned AtoU(const char*str);
     static int StrCmp(const char* s1, const char* s2);
     static size_t StrLen(const char*);
     static int StrNCmp(const char* s1, const char* s2, size_t n);
     static char* StrNCpy(char* s1, const char* s2, size_t n);
-    static char* StrStr(const char* s1, const char* s2);
+    static const char* StrStr(const char* s1, const char* s2);
     static char ToLower(char ch);
     static int MemCmp(const void* s1, const void *s2, size_t n);
     static char* allocStringBuffer(size_t size, const char* file, int line);
@@ -174,7 +175,13 @@ SimpleString BracketsFormattedHexStringFrom(cpputest_ulonglong value);
 SimpleString BracketsFormattedHexStringFrom(signed char value);
 SimpleString BracketsFormattedHexString(SimpleString hexString);
 
-
+/*
+ * ARM compiler has only partial support for C++11.
+ * Specifically std::nullptr_t is not officially supported
+ */
+#if __cplusplus > 199711L && !defined __arm__
+SimpleString StringFrom(const std::nullptr_t value);
+#endif
 
 #if CPPUTEST_USE_STD_CPP_LIB
 
